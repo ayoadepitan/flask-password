@@ -30,3 +30,14 @@ class UpdateAccountForm(FlaskForm):
             user = User.query.filter_by(email=email.data).first()
             if user:
                 raise ValidationError('That email is taken. Please choose a different one.')
+
+class PasswordForm(FlaskForm):
+    website = StringField('Title', validators=[DataRequired()])
+    email = StringField('Email', validators=[Email()])
+    username = StringField('Username')
+    password = PasswordField('Password', validators=[DataRequired()])
+    submit = SubmitField('Save')
+
+    def validate_email(self, email, username):
+        if email is None and username is None:
+            raise ValidationError('Please enter either an email or username.')

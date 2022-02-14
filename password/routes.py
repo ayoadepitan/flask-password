@@ -1,8 +1,9 @@
+from ast import Pass
 from flask import render_template, url_for, redirect, flash, request
 from flask_login import login_user, logout_user, current_user, login_required
 from password import app, bcrypt, db
-from password.forms import RegistrationForm, LoginForm, UpdateAccountForm
-from password.models import User
+from password.forms import RegistrationForm, LoginForm, UpdateAccountForm, PasswordForm
+from password.models import User, Password
 
 @app.route("/")
 @app.route("/home")
@@ -56,3 +57,16 @@ def account():
     elif request.method == 'GET':
         form.email.data = current_user.email
     return render_template('account.html', title='Account', form=form)
+
+
+@app.route("/password/new", methods=['GET', 'POST'])
+@login_required
+def new_password():
+    form = PasswordForm
+    if form.validate_on_submit():
+        password = Password(website=form.website.data, email=form.email.data, username=form.username.data, password=form.password.data, owner=current_user)
+        db.session.add(password)
+        db.session.commit()
+        flash('Your password has been saved!', 'success')
+        return redirect(url_for('home'))
+    return render_template('create_password.html', title='New Password', form=form, legend='New Password')
