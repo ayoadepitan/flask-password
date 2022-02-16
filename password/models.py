@@ -22,3 +22,6 @@ class Password(db.Model):
     username = db.Column(db.String(60), nullable=True)
     password = db.Column(db.String(60), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def __repr__(self):
+        return f'Password("{self.website}","{self.username}", "{self.email}")'

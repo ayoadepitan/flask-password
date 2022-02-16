@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField
-from wtforms.validators import DataRequired, Email, EqualTo, ValidationError
+from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, URL, Optional
 from password.models import User
 from flask_login import current_user
 
@@ -32,12 +32,23 @@ class UpdateAccountForm(FlaskForm):
                 raise ValidationError('That email is taken. Please choose a different one.')
 
 class PasswordForm(FlaskForm):
-    website = StringField('Title', validators=[DataRequired()])
-    email = StringField('Email', validators=[Email()])
+    website = StringField('Website', validators=[DataRequired(), URL()])
+    email = StringField('Email', validators=[Optional(), Email()])
     username = StringField('Username')
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Save')
 
-    def validate_email(self, email, username):
-        if email is None and username is None:
-            raise ValidationError('Please enter either an email or username.')
+    
+    def validate(self):
+        if not super().validate():
+            return False
+        result = True
+        seen = set()
+        for field in [self.email, self.username]:
+            if field.data in seen:
+                self.email.errors.append('Please enter either an email or username.')
+                self.username.errors.append('Please enter either an email or username.')
+                result = False
+            else:
+                seen.add(field.data)
+        return result

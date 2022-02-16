@@ -78,3 +78,10 @@ body {
   .account-heading {
     font-size: 2.5rem;
   }
+
+  a.fill-div {
+    display: block;
+    height: 100%;
+    width: 100%;
+    text-decoration: none;
+  }

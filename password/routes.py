@@ -1,5 +1,6 @@
 from ast import Pass
-from flask import render_template, url_for, redirect, flash, request
+import email
+from flask import render_template, url_for, redirect, flash, request, abort
 from flask_login import login_user, logout_user, current_user, login_required
 from password import app, bcrypt, db
 from password.forms import RegistrationForm, LoginForm, UpdateAccountForm, PasswordForm
@@ -8,7 +9,12 @@ from password.models import User, Password
 @app.route("/")
 @app.route("/home")
 def home():
+    if current_user.is_authenticated:
+        user = User.query.filter_by(email=current_user.email).first()
+        passwords = Password.query.filter_by(owner=user).all()
+        return render_template('home.html', passwords=passwords, user=user)
     return render_template('home.html')
+
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
@@ -62,7 +68,7 @@ def account():
 @app.route("/password/new", methods=['GET', 'POST'])
 @login_required
 def new_password():
-    form = PasswordForm
+    form = PasswordForm()
     if form.validate_on_submit():
         password = Password(website=form.website.data, email=form.email.data, username=form.username.data, password=form.password.data, owner=current_user)
         db.session.add(password)
@@ -70,3 +76,42 @@ def new_password():
         flash('Your password has been saved!', 'success')
         return redirect(url_for('home'))
     return render_template('create_password.html', title='New Password', form=form, legend='New Password')
+
+@app.route("/password/<int:password_id>")
+def password(password_id):
+    password = Password.query.get_or_404(password_id)
+    return render_template('password.html', title=password.website, password=password)
+
+@app.route("/password/<int:password_id>/update", methods=['GET', 'POST'])
+@login_required
+def update_password(password_id):
+    password = Password.query.get_or_404(password_id)
+    if password.owner != current_user:
+        abort(403)
+    form = PasswordForm()
+    if form.validate_on_submit():
+        password.website = form.website.data
+        password.email = form.email.data
+        password.username = form.username.data
+        password.password = form.password.data
+        db.session.commit()
+        flash('Your password has been updated!', 'success')
+        return redirect(url_for('password', password_id=password.id))
+    elif request.method == 'GET':
+        form.website.data = password.website
+        form.email.data = password.email
+        form.username.data = password.username
+        form.password.data = password.password
+        
+    return render_template('update_password.html', title='Update password', form=form, legend='Update password', password=password)
+
+@app.route("/password/<int:password_id>/delete", methods=['POST'])
+@login_required
+def delete_password(password_id):
+    password = Password.query.get_or_404(password_id)
+    if password.author != current_user:
+        abort(403)
+    db.session.delete(password)
+    db.session.commit()
+    flash('Your password has been deleted!', 'success')
+    return redirect(url_for('home'))
