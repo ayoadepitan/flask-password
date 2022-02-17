@@ -1,5 +1,5 @@
 from ast import Pass
-import email
+import re
 from flask import render_template, url_for, redirect, flash, request, abort
 from flask_login import login_user, logout_user, current_user, login_required
 from password import app, bcrypt, db
@@ -11,7 +11,7 @@ from password.models import User, Password
 def home():
     if current_user.is_authenticated:
         user = User.query.filter_by(email=current_user.email).first()
-        passwords = Password.query.filter_by(owner=user).all()
+        passwords = Password.query.filter_by(owner=user).order_by(Password.name)
         return render_template('home.html', passwords=passwords, user=user)
     return render_template('home.html')
 
@@ -64,13 +64,17 @@ def account():
         form.email.data = current_user.email
     return render_template('account.html', title='Account', form=form)
 
+def domain_name(website):
+    url = re.compile(r"https?://(www\.)?")
+    name = url.sub('', website).strip().strip('/')
+    return name
 
 @app.route("/password/new", methods=['GET', 'POST'])
 @login_required
 def new_password():
     form = PasswordForm()
     if form.validate_on_submit():
-        password = Password(website=form.website.data, email=form.email.data, username=form.username.data, password=form.password.data, owner=current_user)
+        password = Password(website=form.website.data, name=domain_name(form.website.data), email=form.email.data, username=form.username.data, password=form.password.data, owner=current_user)
         db.session.add(password)
         db.session.commit()
         flash('Your password has been saved!', 'success')
@@ -91,12 +95,13 @@ def update_password(password_id):
     form = PasswordForm()
     if form.validate_on_submit():
         password.website = form.website.data
+        password.name = domain_name(form.website.data)
         password.email = form.email.data
         password.username = form.username.data
         password.password = form.password.data
         db.session.commit()
         flash('Your password has been updated!', 'success')
-        return redirect(url_for('password', password_id=password.id))
+        return redirect(url_for('home'))
     elif request.method == 'GET':
         form.website.data = password.website
         form.email.data = password.email
@@ -109,7 +114,7 @@ def update_password(password_id):
 @login_required
 def delete_password(password_id):
     password = Password.query.get_or_404(password_id)
-    if password.author != current_user:
+    if password.owner != current_user:
         abort(403)
     db.session.delete(password)
     db.session.commit()

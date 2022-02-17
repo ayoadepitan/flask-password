@@ -18,6 +18,7 @@ class User(db.Model, UserMixin):
 class Password(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     website = db.Column(db.String(120), nullable=False)
+    name = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(120), nullable=True)
     username = db.Column(db.String(60), nullable=True)
     password = db.Column(db.String(60), nullable=False)

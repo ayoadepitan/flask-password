@@ -1,5 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField
+from wtforms.widgets import PasswordInput
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, URL, Optional
 from password.models import User
 from flask_login import current_user
@@ -33,9 +34,11 @@ class UpdateAccountForm(FlaskForm):
 
 class PasswordForm(FlaskForm):
     website = StringField('Website', validators=[DataRequired(), URL()])
+    name = StringField('Name')
     email = StringField('Email', validators=[Optional(), Email()])
     username = StringField('Username')
-    password = PasswordField('Password', validators=[DataRequired()])
+    password = StringField('Password', validators=[DataRequired()], widget=PasswordInput(hide_value=False), id='password')
+    show_password = BooleanField('Show password', id='check', render_kw={"onclick": "myFunction()"})
     submit = SubmitField('Save')
 
     

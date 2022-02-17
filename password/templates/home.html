@@ -5,8 +5,10 @@
             <article class="media content-section">
                 <a class="article-title fill-div" href="{{ url_for('update_password', password_id=password.id) }}">
                     <div class="media-body">
-                        <h4>{{ password.website }}</h4>
-                        {% if password.email %}
+                        <h4>{{ password.name }}</h4>
+                        {% if password.email and password.username %}
+                            <p class="article-content">{{ password.email }}</p>
+                        {% elif password.email %}
                             <p class="article-content">{{ password.email }}</p>
                         {% else %}
                             <p class="article-content">{{ password.username }}</p>
