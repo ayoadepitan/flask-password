@@ -1,4 +1,5 @@
 from ast import Pass
+from crypt import methods
 import re
 from flask import render_template, url_for, redirect, flash, request, abort
 from flask_login import login_user, logout_user, current_user, login_required
@@ -6,14 +7,14 @@ from password import app, bcrypt, db
 from password.forms import RegistrationForm, LoginForm, UpdateAccountForm, PasswordForm
 from password.models import User, Password
 
-@app.route("/")
-@app.route("/home")
+@app.route("/", methods=['GET', 'POST'])
+@app.route("/home", methods=['GET', 'POST'])
 def home():
     if current_user.is_authenticated:
         user = User.query.filter_by(email=current_user.email).first()
         passwords = Password.query.filter_by(owner=user).order_by(Password.name)
         return render_template('home.html', passwords=passwords, user=user)
-    return render_template('home.html')
+    return login()
 
 
 @app.route("/register", methods=['GET', 'POST'])
@@ -120,3 +121,8 @@ def delete_password(password_id):
     db.session.commit()
     flash('Your password has been deleted!', 'success')
     return redirect(url_for('home'))
+
+
+@app.route("/generator", methods=['GET'])
+def generator():
+    return render_template('generator.html')
